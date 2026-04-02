@@ -12,7 +12,7 @@ repo = os.environ.get("REPO", "$REPO")
 config_path = os.path.join(repo, "containers", "containers.yml")
 
 with open(config_path) as f:
-    containers = yaml.safe_load(f)['containers']
+    containers = yaml.safe_load(f)
 
 result = subprocess.run(
     ['incus', 'list', '--format', 'csv', '-c', 'n'],
