@@ -3,21 +3,36 @@ name: apply
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   apply:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
 
-      - name: push and apply
+      - name: sync repo to tinkerspace
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.TINKERSPACE_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-
           rsync -az --delete \
-            -e "ssh -o StrictHostKeyChecking=no" \
-            ./ tinkerspace@187.127.143.52:/opt/tinkerhub-infra/
-          ssh -o StrictHostKeyChecking=no tinkerspace@187.127.143.52 \
-            "cd /opt/tinkerhub-infra && sudo bash scripts/apply.sh"
+            -e "ssh -o StrictHostKeyChecking=no -p 22" \
+            ./ tinkerspace@187.127.143.52:/opt/infried/
+
+      - name: apply containers
+        run: |
+          ssh -o StrictHostKeyChecking=no -p 22 tinkerspace@187.127.143.52 \
+            "cd /opt/infried && sudo bash scripts/apply-containers.sh"
+
+      - name: apply subdomains
+        run: |
+          ssh -o StrictHostKeyChecking=no -p 22 tinkerspace@187.127.143.52 \
+            "cd /opt/infried && sudo bash scripts/apply-subdomains.sh"
+
+      - name: reload nginx
+        run: |
+          ssh -o StrictHostKeyChecking=no -p 22 tinkerspace@187.127.143.52 \
+            "incus exec reverse-proxy -- nginx -t && incus exec reverse-proxy -- nginx -s reload"
