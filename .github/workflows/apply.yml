@@ -19,6 +19,5 @@ jobs:
           rsync -az --delete \
             -e "ssh -o StrictHostKeyChecking=no" \
             ./ tinkerspace@187.127.143.52:/opt/tinkerhub-infra/
-
           ssh -o StrictHostKeyChecking=no tinkerspace@187.127.143.52 \
             "cd /opt/tinkerhub-infra && sudo bash scripts/apply.sh"
